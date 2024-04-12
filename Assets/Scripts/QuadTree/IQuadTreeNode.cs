@@ -41,6 +41,7 @@ namespace QuadTree
         void Insert(IQuadTreeObject obj);
         void SetChid(IQuadTreeNode[] childArr);
         bool Remove(IQuadTreeObject obj);
+        void UpdateByDataBoundsChange(IQuadTreeObject treeObj, bool bReinsert);
         void FindDataWithBounds(Bounds targetBounds, ref IList<IQuadTreeObject> findResult);
         bool IsDataEmpty();
         void Draw();

@@ -44,9 +44,16 @@ namespace QuadTree
 
         }
 
+        /// <summary>
+        /// 完全包含给定Bounds
+        /// </summary>
+        /// <param name="bounds"></param>
+        /// <returns></returns>
         public bool Contains(Bounds bounds)
         {
-            return NodeBounds != null && NodeBounds.Intersects(bounds);
+            return NodeBounds != null &&
+                bounds.min.x >= NodeBounds.min.x && bounds.max.x <= NodeBounds.max.x &&
+                bounds.min.z >= NodeBounds.min.z && bounds.max.z <= NodeBounds.max.z;
         }
 
         /// <summary>
@@ -101,13 +108,7 @@ namespace QuadTree
             if (_dataSet.Contains(obj))
             {
                 bRemove = true;
-                _dataSet.Remove(obj);
-                obj.StorageNode = null;
-
-                if (IsDataEmpty())
-                {
-                    Reset();
-                }
+                RemoveOnCurrentNode(obj);
             }
             else
             {
@@ -119,6 +120,43 @@ namespace QuadTree
                 }
             }
             return bRemove;
+        }
+
+        /// <summary>
+        /// 物体Bounds改变后刷新四叉树
+        /// </summary>
+        /// <param name="treeObj"></param>
+        /// <param name="bReinsert">是否删除后重新插入</param>
+        public void UpdateByDataBoundsChange(IQuadTreeObject treeObj, bool bReinsert)
+        {
+            if (Contains(treeObj.GetBounds()))
+            {
+                if (bReinsert)
+                {
+                    RemoveOnCurrentNode(treeObj);
+                    Insert(treeObj);
+                }
+                else
+                {
+                    Insert(treeObj);
+                }
+
+            }
+            else
+            {
+                //需要尝试从父节点重新插入
+                if (Parent == null)
+                {
+                    Root.Expand();
+                }
+                if (Parent != null)
+                {
+                    RemoveOnCurrentNode(treeObj);
+                    Parent.UpdateByDataBoundsChange(treeObj, false);
+                }
+
+            }
+
         }
 
         /// <summary>
@@ -193,6 +231,20 @@ namespace QuadTree
             {
                 _children[i]?.Draw();
             }
+        }
+
+        /// <summary>
+        /// 只从当前节点移除物体
+        /// </summary>
+        /// <param name="obj"></param>
+        private void RemoveOnCurrentNode(IQuadTreeObject obj)
+        {
+            bool bSuccess = _dataSet.Remove(obj);
+            if(bSuccess)
+                obj.StorageNode = null;
+
+            if (IsDataEmpty())
+                Reset();
         }
 
         /// <summary>

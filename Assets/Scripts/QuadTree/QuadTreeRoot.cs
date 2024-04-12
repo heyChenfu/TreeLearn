@@ -1,6 +1,5 @@
 ﻿
 using System.Collections.Generic;
-using System.Drawing;
 using UnityEngine;
 
 namespace QuadTree
@@ -116,6 +115,13 @@ namespace QuadTree
             _rootNode = newRootNode;
             //反向扩展
             _bSpreadingDirectionRight = !_bSpreadingDirectionRight;
+
+        }
+
+        public void DrawGizmos()
+        {
+            Gizmos.color = Color.red;
+            _rootNode?.Draw();
 
         }
 

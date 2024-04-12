@@ -12,6 +12,7 @@ namespace QuadTree
         /// </summary>
         /// <returns></returns>
         Bounds GetBounds();
+        void DrawGizmos(Bounds bounds);
 
     }
 

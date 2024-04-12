@@ -27,6 +27,7 @@ namespace QuadTree
         void Insert(IQuadTreeObject item);
         IList<IQuadTreeObject> Find(Bounds bound);
         void Expand();
+        void DrawGizmos();
 
     }
 
