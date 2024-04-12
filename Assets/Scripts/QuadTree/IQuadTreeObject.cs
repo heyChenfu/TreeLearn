@@ -8,7 +8,7 @@ namespace QuadTree
 
         IQuadTreeNode StorageNode { get; set; }
         /// <summary>
-        /// 物体的Bounds
+        /// 获取物体的Bounds
         /// </summary>
         /// <returns></returns>
         Bounds GetBounds();

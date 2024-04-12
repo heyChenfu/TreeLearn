@@ -25,12 +25,8 @@ namespace QuadTree
 
         void Reset();
         void Insert(IQuadTreeObject item);
-        /// <summary>
-        /// 查询
-        /// </summary>
-        /// <param name="bound"></param>
-        /// <returns></returns>
-        IList<IQuadTreeObject> Query(Bounds bound);
+        IList<IQuadTreeObject> Find(Bounds bound);
+        void Expand();
 
     }
 

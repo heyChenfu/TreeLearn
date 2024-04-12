@@ -1,4 +1,4 @@
-
+ï»¿
 using System.Collections.Generic;
 using System.Linq;
 using Unity.VisualScripting;
@@ -25,7 +25,7 @@ namespace QuadTree
         }
 
         /// <summary>
-        /// ÖØÖÃµ±Ç°½Úµã, Çå³ı×Ó½ÚµãºÍÊı¾İ
+        /// é‡ç½®å½“å‰èŠ‚ç‚¹, æ¸…é™¤å­èŠ‚ç‚¹å’Œæ•°æ®
         /// </summary>
         public void Reset()
         {
@@ -36,7 +36,7 @@ namespace QuadTree
             }
             _dataSet.Clear();
 
-            for (int i = 0; _children != null && i < _children.Count; ++i)
+            for (int i = 0; i < _children.Count; ++i)
             {
                 _children[i].Reset();
             }
@@ -49,6 +49,10 @@ namespace QuadTree
             return NodeBounds != null && NodeBounds.Intersects(bounds);
         }
 
+        /// <summary>
+        /// æ’å…¥ä¸€ä¸ªç‰©ä½“
+        /// </summary>
+        /// <param name="obj"></param>
         public void Insert(IQuadTreeObject obj)
         {
             if (_children.Count == 0)
@@ -62,18 +66,33 @@ namespace QuadTree
             else
             {
                 QuadTreeChildDefine childDefine = ChildCoverJudge(obj.GetBounds());
-                if (childDefine != QuadTreeChildDefine.NONE)
+                if (childDefine <= QuadTreeChildDefine.RIGHT_DOWN)
                 {
                     _children[(int)childDefine].Insert(obj);
                 }
                 else
                 {
-                    //¸²¸Ç¶à¸ö×Ó½ÚµãÊ±±£´æÔÚµ±Ç°½Úµã
+                    //è¦†ç›–å¤šä¸ªå­èŠ‚ç‚¹æ—¶ä¿å­˜åœ¨å½“å‰èŠ‚ç‚¹
                     _dataSet.Add(obj);
                     obj.StorageNode = this;
                 }
             }
 
+        }
+
+        /// <summary>
+        /// é‡ç½®å­èŠ‚ç‚¹
+        /// </summary>
+        /// <param name="childArr"></param>
+        public void SetChid(IQuadTreeNode[] childArr)
+        {
+            for (int i = 0; i < childArr.Length; ++i)
+            {
+                if(i >= _children.Count)
+                    _children.Add(childArr[i]);
+                else
+                    _children[i] = childArr[i];
+            }
         }
 
         public bool Remove(IQuadTreeObject obj)
@@ -92,7 +111,7 @@ namespace QuadTree
             }
             else
             {
-                for (int i = 0; _children != null && i < _children.Count; ++i)
+                for (int i = 0; i < _children.Count; ++i)
                 {
                     bRemove |= _children[i].Remove(obj);
                     if (bRemove)
@@ -103,14 +122,62 @@ namespace QuadTree
         }
 
         /// <summary>
-        /// ×Ô¼ººÍ×Ó½ÚµãÊÇ·ñÊı¾İ¶¼Îª¿Õ
+        /// æ ¹æ®BoundsæŸ¥æ‰¾ç‰©ä½“
+        /// </summary>
+        /// <param name="targetBounds"></param>
+        /// <param name="findResult"></param>
+        public void FindDataWithBounds(Bounds targetBounds, ref IList<IQuadTreeObject> findResult)
+        {
+            if (NodeBounds.Intersects(targetBounds))
+                findResult.AddRange(DataSet);
+
+            if (_children.Count == 0)
+                return;
+            QuadTreeChildDefine coverCondition = ChildCoverJudge(targetBounds);
+            switch (coverCondition) 
+            {
+                case QuadTreeChildDefine.LEFT_UP:
+                case QuadTreeChildDefine.RIGHT_UP:
+                case QuadTreeChildDefine.LEFT_DOWN:
+                case QuadTreeChildDefine.RIGHT_DOWN:
+                    _children[(int)coverCondition].FindDataWithBounds(targetBounds, ref findResult);
+                    break;
+                case QuadTreeChildDefine.ACROSS_MULTIPLE_LEFT:
+                    _children[(int)QuadTreeChildDefine.LEFT_UP].FindDataWithBounds(targetBounds, ref findResult);
+                    _children[(int)QuadTreeChildDefine.LEFT_DOWN].FindDataWithBounds(targetBounds, ref findResult);
+                    break;
+                case QuadTreeChildDefine.ACROSS_MULTIPLE_RIGHT:
+                    _children[(int)QuadTreeChildDefine.RIGHT_UP].FindDataWithBounds(targetBounds, ref findResult);
+                    _children[(int)QuadTreeChildDefine.RIGHT_DOWN].FindDataWithBounds(targetBounds, ref findResult);
+                    break;
+                case QuadTreeChildDefine.ACROSS_MULTIPLE_UP:
+                    _children[(int)QuadTreeChildDefine.LEFT_UP].FindDataWithBounds(targetBounds, ref findResult);
+                    _children[(int)QuadTreeChildDefine.RIGHT_UP].FindDataWithBounds(targetBounds, ref findResult);
+                    break;
+                case QuadTreeChildDefine.ACROSS_MULTIPLE_DOWN:
+                    _children[(int)QuadTreeChildDefine.LEFT_DOWN].FindDataWithBounds(targetBounds, ref findResult);
+                    _children[(int)QuadTreeChildDefine.RIGHT_DOWN].FindDataWithBounds(targetBounds, ref findResult);
+                    break;
+                case QuadTreeChildDefine.ACROSS_MULTIPLE_ALL:
+                default:
+                    for (int i = 0; i < _children.Count; ++i)
+                    {
+                        _children[i].FindDataWithBounds(targetBounds, ref findResult);
+                    }
+                    break;
+            }
+
+        }
+
+        /// <summary>
+        /// è‡ªå·±å’Œå­èŠ‚ç‚¹æ˜¯å¦æ•°æ®éƒ½ä¸ºç©º
         /// </summary>
         /// <returns></returns>
         public bool IsDataEmpty()
         {
             if (_dataSet.Count > 0)
                 return false;
-            for (int i = 0; _children != null && i < _children.Count; ++i)
+            for (int i = 0; i < _children.Count; ++i)
             {
                 if (!_children[i].IsDataEmpty())
                     return false;
@@ -122,26 +189,26 @@ namespace QuadTree
         {
             Gizmos.DrawWireCube(NodeBounds.center, NodeBounds.size);
 
-            for (int i = 0; _children != null && i < _children.Count; ++i)
+            for (int i = 0; i < _children.Count; ++i)
             {
                 _children[i]?.Draw();
             }
         }
 
         /// <summary>
-        /// ´´½¨ËùÓĞ×Ó½Úµã
+        /// åˆ›å»ºæ‰€æœ‰å­èŠ‚ç‚¹
         /// </summary>
         private void CreateChildrenNode()
         {
             Vector3 currBoundsHalf = NodeBounds.size * 0.5f;
-            //×Ó½Úµã´óĞ¡ÊÇ·ñÒÑ¾­´ïµ½»®·ÖÏŞÖÆ
+            //å­èŠ‚ç‚¹å¤§å°æ˜¯å¦å·²ç»è¾¾åˆ°åˆ’åˆ†é™åˆ¶
             if (currBoundsHalf.x < Root.MinTreeNodeSize || currBoundsHalf.z < Root.MinTreeNodeSize)
             {
                 return;
             }
 
             Vector3 childCenterOffset = currBoundsHalf * 0.5f;
-            Vector3[] childCenterArr = new Vector3[4];
+            Vector3[] childCenterArr = new Vector3[Root.MaxChidNodeCount];
             childCenterArr[(int)QuadTreeChildDefine.LEFT_UP] = new Vector3(
                 NodeBounds.center.x - childCenterOffset.x, NodeBounds.center.y, NodeBounds.center.z + childCenterOffset.z);
             childCenterArr[(int)QuadTreeChildDefine.LEFT_DOWN] = new Vector3(
@@ -164,7 +231,7 @@ namespace QuadTree
         }
 
         /// <summary>
-        /// ²é¿´Ä¿±êBoundsÔÚÄÄ¸ö×Ó½ÚµãµÄBoundsÖĞ
+        /// æŸ¥çœ‹ç›®æ ‡Boundsåœ¨å“ªä¸ªå­èŠ‚ç‚¹çš„Boundsä¸­
         /// </summary>
         /// <param name="targetBounds"></param>
         /// <returns></returns>
@@ -172,26 +239,26 @@ namespace QuadTree
         {
             if (targetBounds.min.z >= NodeBounds.center.z)
             {
-                //×îĞ¡z´óÓÚµ±Ç°BoundsÖĞĞÄz, ÔòÒÑ¾­ÔÚÉÏ°ë²¿·Ö
+                //æœ€å°zå¤§äºå½“å‰Boundsä¸­å¿ƒz, åˆ™å·²ç»åœ¨ä¸ŠåŠéƒ¨åˆ†
                 if (targetBounds.max.x < NodeBounds.center.x)
                 {
-                    //×î´óxĞ¡ÓÚÖĞĞÄx, ÔòÖ»ÄÜÔÚ×óÉÏ
+                    //æœ€å¤§xå°äºä¸­å¿ƒx, åˆ™åªèƒ½åœ¨å·¦ä¸Š
                     return QuadTreeChildDefine.LEFT_UP;
                 }
                 else if (targetBounds.min.x >= NodeBounds.center.x)
                 {
-                    //×îĞ¡x´óÓÚÖĞĞÄx, ÔòÖ»ÄÜÔÚÓÒÉÏ
+                    //æœ€å°xå¤§äºä¸­å¿ƒx, åˆ™åªèƒ½åœ¨å³ä¸Š
                     return QuadTreeChildDefine.RIGHT_UP;
                 }
                 else
                 {
-                    //ÆäËûÇé¿öÔòÈÏÎª¸²¸Ç¶à¸ö
-                    return QuadTreeChildDefine.NONE;
+                    //å…¶ä»–æƒ…å†µåˆ™è®¤ä¸ºè¦†ç›–å¤šä¸ª
+                    return QuadTreeChildDefine.ACROSS_MULTIPLE_UP;
                 }
             }
             else if (targetBounds.max.z < NodeBounds.center.z)
             {
-                //×î´ózĞ¡ÓÚµ±Ç°BoundsÖĞĞÄz, Ôò±ØÈ»ÔÚÏÂ°ë²¿·Ö
+                //æœ€å¤§zå°äºå½“å‰Boundsä¸­å¿ƒz, åˆ™å¿…ç„¶åœ¨ä¸‹åŠéƒ¨åˆ†
                 if (targetBounds.max.x < NodeBounds.center.x)
                 {
                     return QuadTreeChildDefine.LEFT_DOWN;
@@ -202,14 +269,25 @@ namespace QuadTree
                 }
                 else
                 {
-                    //ÆäËûÇé¿öÔòÈÏÎª¸²¸Ç¶à¸ö
-                    return QuadTreeChildDefine.NONE;
+                    //å…¶ä»–æƒ…å†µåˆ™è®¤ä¸ºè¦†ç›–å¤šä¸ª
+                    return QuadTreeChildDefine.ACROSS_MULTIPLE_DOWN;
                 }
             }
             else
             {
-                //ÆäËûÇé¿öÔòÈÏÎª¸²¸Ç¶à¸ö
-                return QuadTreeChildDefine.NONE;
+                //å…¶ä»–æƒ…å†µåˆ™è®¤ä¸ºè¦†ç›–å¤šä¸ª
+                if (targetBounds.min.x >= NodeBounds.center.x)
+                {
+                    return QuadTreeChildDefine.ACROSS_MULTIPLE_RIGHT;
+                }
+                else if (targetBounds.max.x < NodeBounds.center.x)
+                {
+                    return QuadTreeChildDefine.ACROSS_MULTIPLE_LEFT;
+                }
+                else
+                {
+                    return QuadTreeChildDefine.ACROSS_MULTIPLE_ALL;
+                }
             }
 
         }

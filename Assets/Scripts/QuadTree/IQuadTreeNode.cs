@@ -10,7 +10,13 @@ namespace QuadTree
         RIGHT_UP = 1,
         LEFT_DOWN = 2,
         RIGHT_DOWN = 3,
-        NONE = 4,
+        //同时多个子节点情况
+        ACROSS_MULTIPLE_LEFT,
+        ACROSS_MULTIPLE_RIGHT,
+        ACROSS_MULTIPLE_UP,
+        ACROSS_MULTIPLE_DOWN,
+        ACROSS_MULTIPLE_ALL,
+
     }
 
     public interface IQuadTreeNode
@@ -33,7 +39,9 @@ namespace QuadTree
         void Reset();
         bool Contains(Bounds bounds);
         void Insert(IQuadTreeObject obj);
+        void SetChid(IQuadTreeNode[] childArr);
         bool Remove(IQuadTreeObject obj);
+        void FindDataWithBounds(Bounds targetBounds, ref IList<IQuadTreeObject> findResult);
         bool IsDataEmpty();
         void Draw();
 
