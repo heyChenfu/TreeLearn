@@ -39,6 +39,7 @@ namespace QuadTree
             for (int i = 0; i < _children.Count; ++i)
             {
                 _children[i].Reset();
+                Root.Pool.Return(_children[i]);
             }
             _children.Clear();
 
@@ -272,12 +273,11 @@ namespace QuadTree
 
             for (int i = 0; i < childCenterArr.Length; ++i)
             {
-                _children.Add(new QuadTreeNode()
-                {
-                    Root = this.Root,
-                    NodeBounds = new Bounds(childCenterArr[i], currBoundsHalf),
-                    Parent = this,
-                });
+                IQuadTreeNode childNode = Root.Pool.Borrow();
+                childNode.Root = Root;
+                childNode.NodeBounds = new Bounds(childCenterArr[i], currBoundsHalf);
+                childNode.Parent = this;
+                _children.Add(childNode);
             }
 
         }

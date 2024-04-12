@@ -14,16 +14,17 @@ namespace QuadTree
         public int MaxChidNodeCount { get { return _maxChidNodeCount; } }
         public float MinTreeNodeSize { get { return _minTreeNodeSize; } }
         public IQuadTreeNode RootNode { get { return _rootNode; } }
+        public SimplePool<IQuadTreeNode> Pool { get; private set; }
 
         public QuadTreeRoot(Vector3 center, Vector3 size, float minTreeNodeSize) 
         {
             _maxChidNodeCount = 4;
             _minTreeNodeSize = minTreeNodeSize;
-            _rootNode = new QuadTreeNode() {
-                Root = this,
-                NodeBounds = new Bounds(center, size),
-                Parent = null,
-            };
+            Pool = new SimplePool<IQuadTreeNode>(CraeteQuadTreeNode, ReturnQuadTreeNode);
+            _rootNode = Pool.Borrow();
+            _rootNode.Root = this;
+            _rootNode.NodeBounds = new Bounds(center, size);
+            _rootNode.Parent = null;
 
         }
 
@@ -73,44 +74,21 @@ namespace QuadTree
             Vector3 oldBoundsSize = _rootNode.NodeBounds.size;
             Vector3 oldBoundsExtents = _rootNode.NodeBounds.extents;
             Vector3 newCenter = _bSpreadingDirectionRight ? _rootNode.NodeBounds.max : _rootNode.NodeBounds.min;
-            IQuadTreeNode newRootNode = new QuadTreeNode()
-            {
-                Root = this,
-                NodeBounds = new Bounds(newCenter, _rootNode.NodeBounds.size * 2),
-                Parent = null,
-            };
+            
+            IQuadTreeNode newRootNode = BorrowQuadTreeNode(new Bounds(newCenter, _rootNode.NodeBounds.size * 2), null);
             _rootNode.Parent = newRootNode;
 
             IQuadTreeNode[] newNodeArr = new IQuadTreeNode[_maxChidNodeCount];
             oldBoundsExtents.x *= -1;
-            newNodeArr[(int)QuadTreeChildDefine.LEFT_UP] = new QuadTreeNode() {
-                Root = this,
-                NodeBounds = new Bounds(newCenter + oldBoundsExtents, oldBoundsSize),
-                Parent = newRootNode,
-            };
+            newNodeArr[(int)QuadTreeChildDefine.LEFT_UP] = BorrowQuadTreeNode(new Bounds(newCenter + oldBoundsExtents, oldBoundsSize), newRootNode);
             oldBoundsExtents.x *= -1;
             newNodeArr[(int)QuadTreeChildDefine.RIGHT_UP] = !_bSpreadingDirectionRight ? _rootNode :
-            new QuadTreeNode()
-            {
-                Root = this,
-                NodeBounds = new Bounds(newCenter + oldBoundsExtents, oldBoundsSize),
-                Parent = newRootNode,
-            };
+                BorrowQuadTreeNode(new Bounds(newCenter + oldBoundsExtents, oldBoundsSize), newRootNode);
             oldBoundsExtents.z *= -1;
-            newNodeArr[(int)QuadTreeChildDefine.RIGHT_DOWN] = new QuadTreeNode()
-            {
-                Root = this,
-                NodeBounds = new Bounds(newCenter + oldBoundsExtents, oldBoundsSize),
-                Parent = newRootNode,
-            };
+            newNodeArr[(int)QuadTreeChildDefine.RIGHT_DOWN] = BorrowQuadTreeNode(new Bounds(newCenter + oldBoundsExtents, oldBoundsSize), newRootNode);
             oldBoundsExtents.x *= -1;
-            newNodeArr[(int)QuadTreeChildDefine.LEFT_DOWN] = _bSpreadingDirectionRight ? _rootNode : 
-            new QuadTreeNode()
-            {
-                Root = this,
-                NodeBounds = new Bounds(newCenter + oldBoundsExtents, oldBoundsSize),
-                Parent = newRootNode,
-            };
+            newNodeArr[(int)QuadTreeChildDefine.LEFT_DOWN] = _bSpreadingDirectionRight ? _rootNode :
+                BorrowQuadTreeNode(new Bounds(newCenter + oldBoundsExtents, oldBoundsSize), newRootNode);
             newRootNode.SetChid(newNodeArr);
             _rootNode = newRootNode;
             //反向扩展
@@ -123,6 +101,25 @@ namespace QuadTree
             Gizmos.color = Color.red;
             _rootNode?.Draw();
 
+        }
+
+        private IQuadTreeNode BorrowQuadTreeNode(Bounds newBounds, IQuadTreeNode parentNode)
+        {
+            IQuadTreeNode newRootNode = Pool.Borrow();
+            newRootNode.Root = this;
+            newRootNode.NodeBounds = newBounds;
+            newRootNode.Parent = parentNode;
+            return newRootNode;
+        }
+
+        private IQuadTreeNode CraeteQuadTreeNode()
+        {
+            return new QuadTreeNode();
+        }
+
+        private void ReturnQuadTreeNode(IQuadTreeNode treeNode)
+        {
+            
         }
 
     }

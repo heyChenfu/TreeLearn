@@ -22,6 +22,7 @@ namespace QuadTree
         /// 四叉树根节点
         /// </summary>
         IQuadTreeNode RootNode { get; }
+        SimplePool<IQuadTreeNode> Pool { get; }
 
         void Reset();
         void Insert(IQuadTreeObject item);
